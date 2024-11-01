@@ -85,3 +85,5 @@ ax2.set_ylabel(r'$\mathrm{cumsum}(\sigma)/\mathrm{sum}(\sigma)$')
 ax2.set_title('Energía Acumulada')
 
 plt.show()
+
+#hola
