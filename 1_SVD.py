@@ -1,5 +1,26 @@
+from matplotlib.image import imread
 import numpy as np
 import matplotlib.pyplot as plt
+
+A = imread('/Users/belengotz/Desktop/TP 03 dataset imagenes/IMG_0568.jpg')
+print(A.shape)
+plt.imshow(A)
+print(np.max(A))
+print(np.min(A))
+
+
+if len(A.shape) == 3:
+    print(A[:2, :2, 0])
+else:
+    print(A[:2, :2])
+
+#Convierto a escala de grises promediando los 3 canales RGB
+if len(A.shape) == 3:
+    X = np.mean(A, axis=-1)
+else:
+    X = A
+
+plt.imshow(X, cmap = 'gray')
 
 # Cálculo de SVD
 U, S, VT = np.linalg.svd(X, full_matrices=False)
