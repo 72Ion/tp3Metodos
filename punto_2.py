@@ -1,57 +1,88 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+from sklearn.metrics.pairwise import euclidean_distances
 
-# Cargar el dataset (ejemplo desde un archivo CSV)
-def load_dataset(filepath):
-    data = pd.read_csv(filepath)
-    X = data.values  # Convertir el dataset en una matriz numpy
-    return X
+from sklearn.preprocessing import StandardScaler
 
-# Calcular la matriz de similitud usando la función de similitud dada
-def similarity_matrix(X, sigma=1.0):
-    n = X.shape[0]
-    similarity = np.zeros((n, n))
-    for i in range(n):
-        for j in range(n):
-            dist_sq = np.sum((X[i] - X[j]) ** 2)
-            similarity[i, j] = np.exp(-dist_sq / (2 * sigma ** 2))
-    return similarity
+# Cargar el dataset desde el archivo CSV
+X = pd.read_csv('/Users/belengotz/Desktop/dataset_x_y/dataset01.csv').values  # Convierte el DataFrame a una matriz numpy
+X = StandardScaler().fit_transform(X)
 
-# Realizar SVD y proyectar a espacio reducido de dimensión d
-def svd_projection(X, d):
-    U, S, Vt = np.linalg.svd(X, full_matrices=False)
-    # Proyección a espacio reducido de dimensión d
-    X_reduced = U[:, :d] @ np.diag(S[:d])
-    return X_reduced
+# Paso 1: Realizar la descomposición en valores singulares (SVD)
+U, S, Vt = np.linalg.svd(X, full_matrices=False)
 
-# Visualizar la matriz de similitud
-def plot_similarity_matrix(similarity, title):
-    plt.imshow(similarity, cmap='viridis')
+# Paso 2: Proyectar los datos al nuevo espacio reducido Z para diferentes valores de d
+d_values = [2, 6, 10, X.shape[1]]  # valores de d = 2, 6, 10 y p (dimensionalidad original)
+
+# Definir el parámetro sigma para la similitud
+sigma = 15  # Reducir el valor de sigma puede ayudar a que las distancias sean más diferenciadas
+
+def calculate_similarity(X, sigma=0.5):
+    """
+    Calcula la matriz de similaridad utilizando el kernel RBF
+    :param X: Matriz de datos n x p (n muestras y p características)
+    :param sigma: Parámetro del kernel RBF
+    :return: Matriz de similaridad n x n
+    """
+    # Calcular la matriz de distancias euclidianas entre todas las muestras
+    dist_matrix = euclidean_distances(X, X)  # dist_matrix[i, j] = ||x_i - x_j||
+    
+    # Aplicar el kernel RBF para convertir distancias a similaridades
+    similarity_matrix = np.exp(-dist_matrix**2 / (2 * sigma**2))
+    
+    return similarity_matrix
+
+# Calcular y mostrar la similaridad en el espacio original y reducido, y aplicar la regresión ridge
+for d in d_values:
+    # Reducir la dimensionalidad utilizando los primeros d vectores singulares
+    V_d = Vt[:d, :]  # Tomar los primeros d vectores de Vt
+    Z = X @ V_d.T  # Proyección de X en el nuevo espacio reducido
+    
+    # Visualización si d = 2 (para 2 dimensiones, podemos graficar)
+    if d == 2:
+        plt.figure(figsize=(12, 8))  # Tamaño más grande de la figura
+        plt.scatter(Z[:, 0], Z[:, 1], s=50, c='b', marker='o')
+        plt.title(f'Proyección en 2 dimensiones (d={d})')
+        plt.xlabel('Componente 1')
+        plt.ylabel('Componente 2')
+        plt.show()
+
+    # Mostrar la forma del espacio proyectado Z
+    print(f"Forma del espacio proyectado Z para d={d}: {Z.shape}")
+    
+    # Calcular la matriz de similaridad para el espacio original X
+    similarity_original = calculate_similarity(X)
+    # Calcular la matriz de similaridad para el espacio reducido Z
+    similarity_reduced = calculate_similarity(Z)
+    
+    # Visualizar las matrices de similaridad con escalas de color distintas
+    plt.figure(figsize=(16, 8))  # Aumentar el tamaño de la figura
+
+    # Similaridad en el espacio original
+    plt.subplot(1, 2, 1)
+    plt.imshow(similarity_original, interpolation='nearest', aspect='auto')
+    plt.title(f'Similaridad en el espacio original (d={d})')
     plt.colorbar()
-    plt.title(title)
-    plt.xlabel('Muestra')
-    plt.ylabel('Muestra')
+
+    # Similaridad en el espacio reducido
+    plt.subplot(1, 2, 2)
+    plt.imshow(similarity_reduced, interpolation='nearest', aspect='auto')
+    plt.title(f'Similaridad en el espacio reducido (d={d})')
+    plt.colorbar()
+
+    plt.tight_layout()  # Para evitar superposiciones
     plt.show()
 
-# Cargar el dataset
-dataset_path = '/ruta/al/dataset.csv'  # Cambia esta ruta por la de tu archivo
-X = load_dataset(dataset_path)
+    # Imprimir la comparación de matrices de similaridad
+    print(f"Comparación de similaridad: Espacio original vs Espacio reducido para d={d}")
+    print("Matriz de similaridad original:\n", similarity_original)
+    print("Matriz de similaridad reducida:\n", similarity_reduced)
 
-# Valores de d para probar
-d_values = [2, 6, 10]
-sigma = 1.0  # Parámetro de similitud
-
-# Calcular y visualizar la matriz de similitud en el espacio original
-similarity_X = similarity_matrix(X, sigma=sigma)
-plot_similarity_matrix(similarity_X, 'Similitud en el Espacio Original')
-
-# Calcular y visualizar la matriz de similitud en el espacio reducido para cada valor de d
-for d in d_values:
-    X_reduced = svd_projection(X, d)
-    similarity_Z = similarity_matrix(X_reduced, sigma=sigma)
-    plot_similarity_matrix(similarity_Z, f'Similitud en el Espacio Reducido (d={d})')
-
-    # Comparar similitudes: calcular diferencia entre matrices de similitud
-    diff = np.linalg.norm(similarity_X - similarity_Z, 'fro') / np.linalg.norm(similarity_X, 'fro')
-    print(f"Diferencia relativa de similitud para d = {d}: {diff:.4f}")
+    # Reflexión sobre la elección de 'd'
+    print(f"Reflexión sobre la elección de d={d}:")
+    if d == X.shape[1]:
+        print("Cuando d es igual a la dimensionalidad original, la similaridad se conserva exactamente.")
+    else:
+        print("Al reducir la dimensionalidad, algunas relaciones entre las muestras pueden perderse, dependiendo de cuán importante es la varianza explicada por los primeros componentes.")
