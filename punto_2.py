@@ -42,6 +42,7 @@ plt.title(f'Proyección en 2 dimensiones (d={2})')
 plt.xlabel('Componente 1')
 plt.ylabel('Componente 2')
 plt.show()
+
 for s in sigma:
     for idx, d in enumerate(d_values, 1):
         V_d = Vt[:d, :]  
@@ -135,5 +136,4 @@ print(f"Número de componentes necesarios para asegurar un error promedio del 10
 
 """
 Número de componentes necesarios para asegurar un error promedio del 10%: 167
-
 """
