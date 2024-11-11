@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.preprocessing import StandardScaler
@@ -13,7 +12,7 @@ U, S, Vt = np.linalg.svd(X, full_matrices=False)
 
 
 d_values = [2, 6, 10, X.shape[1]] 
-sigma = 10 #IR CAMBIANDO
+sigma = [1, 5, 10, 50, 100, 1000] #IR CAMBIANDO
 
 plt.subplot(1, 1, 1)  # Primer gráfico en una cuadrícula de 3x2
 plt.imshow(X, interpolation='nearest', aspect='auto', cmap='viridis')
@@ -38,25 +37,26 @@ V_2 = Vt[:2, :]
 Z2 = X @ V_2.T
 
 plt.figure(figsize=(12, 8))  
-plt.scatter(Z2[:, 0], Z2[:, 1], s=50, c='b', marker='o')
+plt.scatter(Z2[:, 0], Z2[:, 1], s=50, c='#6495ED', marker='o')
 plt.title(f'Proyección en 2 dimensiones (d={2})')
 plt.xlabel('Componente 1')
 plt.ylabel('Componente 2')
 plt.show()
+for s in sigma:
+    for idx, d in enumerate(d_values, 1):
+        V_d = Vt[:d, :]  
+        Z = X @ V_d.T  
 
-for idx, d in enumerate(d_values, 1):
-    V_d = Vt[:d, :]  
-    Z = X @ V_d.T  
+        similarity_reduced = calculate_similarity(Z, s)
 
-    similarity_reduced = calculate_similarity(Z, sigma)
+        plt.subplot(2, 2, idx)  
+        plt.imshow(similarity_reduced, interpolation='nearest', aspect='auto', cmap='viridis')
+        plt.title(f'Similaridad en espacio reducido (d={d})')
+        plt.colorbar()
 
-    plt.subplot(2, 2, idx)  
-    plt.imshow(similarity_reduced, interpolation='nearest', aspect='auto', cmap='viridis')
-    plt.title(f'Similaridad en espacio reducido (d={d})')
-    plt.colorbar()
-
-plt.tight_layout()
-plt.show()
+    plt.tight_layout()
+    plt.suptitle(f'Similaridad en espacio reducido con σ ={s}')
+    plt.show()
 
 
 
@@ -86,7 +86,7 @@ beta es hacer la pseudo inversa por y
 """
 
 # Paso 1: Cargar el vector de etiquetas Y desde el archivo y.txt y restarle su media
-Y_ = pd.read_csv('/Users/belengotz/Desktop/dataset_x_y/y1.txt', header=None).values.flatten()
+Y_ = pd.read_csv('/Users/belengotz/Desktop/dataset_x_y/y1.txt', header=None).values
 Y_mean = np.mean(Y_)
 Y = Y_ - Y_mean  # Restarle la media a Y
 
@@ -123,4 +123,17 @@ X tienen una mayor importancia en la predicción de
 Y
 Y, mientras que los pesos cercanos a cero sugieren que esas dimensiones contribuyen poco al modelo.
 Este análisis puede ayudar a identificar cuáles características son las más relevantes y pueden guiar la selección de variables, especialmente en modelos de alta dimensionalidad.
+"""
+
+
+explained_variances = np.cumsum(S ** 2) / np.sum(S ** 2)  # Variancia acumulada explicada
+threshold = 0.90  # 90% para un error promedio del 10%
+min_components = np.argmax(explained_variances >= threshold) + 1
+
+print(f"Número de componentes necesarios para asegurar un error promedio del 10%: {min_components}")
+
+
+"""
+Número de componentes necesarios para asegurar un error promedio del 10%: 167
+
 """

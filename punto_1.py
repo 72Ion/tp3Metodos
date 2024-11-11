@@ -17,9 +17,12 @@ def load_images(directory, img_size):
             continue
     return np.array(images)
 
+
+
 img_directory = '/Users/belengotz/Desktop/tp3Metodos/TP 03 dataset imagenes'
 img_size = 28 
 images_matrix = load_images(img_directory, img_size)
+
 
 def svd_compression(images, d):
     #SVD
@@ -57,6 +60,30 @@ def visualize_images(original_images, compressed_images, img_size, title=None):
 def calculate_error(original, compressed):
     error = np.linalg.norm(original - compressed, 'fro') / np.linalg.norm(original, 'fro')
     return error * 100 
+
+
+def visualize_images_matrix(images_matrix, img_size):
+    num_images = images_matrix.shape[0]
+    grid_size = int(np.ceil(np.sqrt(num_images)))
+    
+    fig, axes = plt.subplots(grid_size, grid_size, figsize=(10, 10))
+    axes = axes.flatten()
+    
+    for i in range(num_images):
+        ax = axes[i]
+        ax.imshow(images_matrix[i].reshape(img_size, img_size), cmap='gray')
+        ax.axis('off')
+    
+    # Hide any remaining axes if the number of images is not a perfect square
+    for i in range(num_images, len(axes)):
+        axes[i].axis('off')
+    
+    plt.tight_layout()
+    plt.show()
+visualize_images_matrix(images_matrix, img_size)
+print(f"Las dimensiones de cada imagen son: {img_size}x{img_size} píxeles")
+
+
 
 d_values = [1, 5, 10, 15, 20] 
 errors = []
