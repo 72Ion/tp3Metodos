@@ -13,7 +13,7 @@ Ayuda: ver de utilizar una matriz de similaridad para visualizar todas las simil
 ¿Para qué elección de d resulta más conveniente hacer el análisis? ¿Cómo se conecta esto con los valores singulares de X? ¿Qué conclusiones puede sacar al respecto?
 
 3. Los datos X vienen acompañados de una variable dependiente respuesta o etiquetas llamada Y (archivo y.txt) estructurada como un vector n x 1 para cada muestra. Queremos encontrar el vector ® y modelar
-linealmente el problema que minimice la norma
+linealmente el problema que minimice la norma.
 |XB -yll2
 de manera tal de poder predecir con XB - ý lo mejor posible a las etiquetas y, es decir, minimizar el error de predicción utilizando todas las variables iniciales. Resolviendo el problema de cuadrados mínimos en el espacio original X, que peso se le asigna a cada dimensión original si observamos el
 vector B?
@@ -21,11 +21,33 @@ vector B?
 4. Usando la representacion aprendida con PCA y d - 2: mejora la predicción || ZB - y lle en comparacion a no realizar reduccion de dimensionalidad? Cuales muestras son las de mejor predicción con el mejor modelo?
 """
 
+
+""" 1 """
 X_ = pd.read_csv('/Users/belengotz/Desktop/dataset_x_y/dataset01.csv')
-X_ = X_.drop(X_.columns[0], axis = 1)
+X_ = X_.drop(X_.columns[0], axis = 1) #ya lo lee
 X = StandardScaler().fit_transform(X_)
 
+#print(X)
 
+#histograma a cada columna
+num_columns = X.shape[1]
+max_columns = 10  # Limitar el número de columnas que se muestran a la vez
+
+"""
+for start in range(0, num_columns, max_columns):
+    end = min(start + max_columns, num_columns)
+    fig, axes = plt.subplots(end - start, 1, figsize=(10, (end - start) * 3))
+    
+    for i in range(start, end):
+        ax = axes[i - start] if end - start > 1 else axes
+        ax.hist(X[:, i], bins=30, color='blue', alpha=0.7)
+        ax.set_title(f'Histograma de la columna {i+1}')
+        ax.set_xlabel('Valor')
+        ax.set_ylabel('Frecuencia')
+    
+    plt.tight_layout()
+    plt.show()
+"""
 
 U, S, Vt = np.linalg.svd(X, full_matrices=False)
 
@@ -88,7 +110,14 @@ X_pseudo_inverse = np.linalg.pinv(X)
 
 B = X_pseudo_inverse @ Y_centered #calculo B usando la pseudo-inversa
 
-""" ECM """
+""" ECM 
+
+
+HACER 80/20
+
+HACER TODO LO DE ARRIBA CON EL 80%
+
+"""
 mse = np.mean((X @ B - Y_centered) ** 2)
 print(f"Error cuadrático medio del modelo: {mse}")
 
