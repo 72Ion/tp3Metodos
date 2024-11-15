@@ -57,6 +57,10 @@ def visualize_images(original_images, compressed_images, img_size, title=None):
     
     plt.show()
 
+
+# Verificar las dimensiones de las imágenes redimensionadas
+print(f"Dimensiones de las imágenes redimensionadas: {images_matrix.shape}")
+
 def calculate_error(original, compressed):
     error = np.linalg.norm(original - compressed, 'fro') / np.linalg.norm(original, 'fro')
     return error * 100 
@@ -93,7 +97,7 @@ for d in d_values:
     error = calculate_error(images_matrix, compressed_images)
     errors.append(error)
     
-    #visualize_images(images_matrix, compressed_images, img_size, title=f"Valor de d: {d}, Error de compresión: {error:.2f}%")
+    visualize_images(images_matrix, compressed_images, img_size, title=f"Valor de d: {d}, Error de compresión: {error:.2f}%")
 
 target_error = 10 
 for d in range(1, images_matrix.shape[1] + 1):
@@ -119,7 +123,7 @@ plt.xlabel('Dimensión d')
 plt.ylabel('Error de compresión (%)')
 plt.title('Evolución del error de compresión con respecto a d')
 plt.grid()
-#plt.show()
+plt.show()
 
 
 """
@@ -174,3 +178,51 @@ for i in range(num_vects):
 plt.show()
 
 
+
+def calculate_average_error(original_images, compressed_images):
+    """
+    Calcula el error promedio de compresión entre las imágenes originales y comprimidas.
+    """
+    num_images = original_images.shape[0]
+    total_error = 0
+    
+    for i in range(num_images):
+        error = np.linalg.norm(original_images[i] - compressed_images[i]) / np.linalg.norm(original_images[i])
+        total_error += error
+    
+    average_error = (total_error / num_images) * 100  # Convertir a porcentaje
+    return average_error
+
+def find_optimal_d_average(images_matrix, target_error=10):
+    """
+    Encuentra el valor óptimo de d que asegura un error promedio de compresión ≤ target_error.
+    """
+    for d in range(1, images_matrix.shape[1] + 1):
+        compressed_images = svd_compression(images_matrix, d)
+        average_error = calculate_average_error(images_matrix, compressed_images)
+        if average_error <= target_error:
+            return d, average_error
+    return images_matrix.shape[1], average_error  # En caso de que no se alcance el error deseado
+
+# Calcular el valor óptimo de d para un error promedio ≤ 10%
+optimal_d_avg, optimal_avg_error = find_optimal_d_average(images_matrix, target_error=10)
+print(f"Valor mínimo de d para asegurar un error promedio ≤ 10%: {optimal_d_avg}, con un error promedio de compresión de {optimal_avg_error:.2f}%")
+
+# Visualizar la evolución del error promedio en función de d
+average_errors_range = []
+d_range = range(1, 16)
+
+for d in d_range:
+    compressed_images = svd_compression(images_matrix, d)
+    avg_error = calculate_average_error(images_matrix, compressed_images)
+    average_errors_range.append(avg_error)
+
+plt.figure(figsize=(8, 5))
+plt.plot(d_range, average_errors_range, marker='o', color='b')
+plt.axvline(optimal_d_avg, color='r', linestyle='--', label=f'Valor óptimo de d: {optimal_d_avg}')
+plt.xlabel('Dimensión d')
+plt.ylabel('Error de compresión promedio (%)')
+plt.title('Evolución del error promedio de compresión con respecto a d')
+plt.legend()
+plt.grid()
+plt.show()
