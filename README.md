@@ -54,5 +54,4 @@ Se trabaja con un dataset de muestras de sensores (archivo `dataset.csv`) y una 
 
 ---
 
-## 📁 Archivos esperados
 
